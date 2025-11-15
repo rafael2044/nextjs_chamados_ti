@@ -68,10 +68,7 @@ export default function Navbar() {
   ) : (
     <>
       <Link href="/login" passHref>
-        <Button variant="ghost" onClick={closeMobileMenu}>Entrar</Button>
-      </Link>
-      <Link href="/registrar" passHref>
-        <Button variant="default" onClick={closeMobileMenu}>Registrar</Button>
+        <Button variant="default" onClick={closeMobileMenu}>Entrar</Button>
       </Link>
     </>
   );
