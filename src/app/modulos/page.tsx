@@ -91,8 +91,8 @@ export default function ModuloPage() {
   const fetchModulos = useCallback(async () => {
     setLoadingModulos(true);
     try {
-      // 3. Endpoint da API atualizado para "/modulos"
-      const response = await api.get("/modulo", {
+      // 3. Endpoint da API atualizado para "/modulo/s"
+      const response = await api.get("/modulo/", {
         params: { offset: currentPage, limit: ITEMS_PER_PAGE },
       });
       setData(response.data);
@@ -114,8 +114,8 @@ export default function ModuloPage() {
     
     setIsSubmitting(true);
     try {
-      // 4. Endpoint da API atualizado para "/modulos"
-      await api.post("/modulo", { nome });
+      // 4. Endpoint da API atualizado para "/modulo/s"
+      await api.post("/modulo/", { nome });
 
       toast.success("Novo módulo cadastrado");
       setNome("");
@@ -136,8 +136,8 @@ export default function ModuloPage() {
 
     setIsDeleting(true);
     try {
-      // 6. Endpoint da API atualizado para "/modulos/:id"
-      await api.delete(`/modulo/${moduloParaDeletar.id}`);
+      // 6. Endpoint da API atualizado para "/modulo/s/:id"
+      await api.delete(`/modulo/${moduloParaDeletar.id}/`);
       toast.success("Módulo deletado com sucesso");
 
       // 7. Lógica de paginação pós-exclusão

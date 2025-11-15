@@ -78,8 +78,8 @@ export default function ChamadoFormPage() {
       try {
         // 2. Carrega ambos em paralelo
         const [unidadesResp, modulosResp] = await Promise.all([
-          api.get('/unidade'), // Assume que retorna { unidades: [...] }
-          api.get('/modulo')  // Assume que retorna { modulos: [...] }
+          api.get('/unidade/'), // Assume que retorna { unidades: [...] }
+          api.get('/modulo/')  // Assume que retorna { modulos: [...] }
         ]);
 
         const unidadesData = unidadesResp.data.unidades || [];
@@ -137,12 +137,12 @@ export default function ChamadoFormPage() {
 
     try {
 
-      const response = await api.post('/chamados', formData);
+      const response = await api.post('/chamados/', formData);
 
       if (anexo) {
         const formDataAnexo = new FormData();
         formDataAnexo.append("file", anexo);
-        const resp = await api.post(`/chamados/${response?.data?.chamado_id}/anexo`, formDataAnexo, {
+        const resp = await api.post(`/chamados/${response?.data?.chamado_id}/anexo/`, formDataAnexo, {
           headers: {"Content-Type": "multipart/form-data"}
         });
         toast.success(resp?.data.message);

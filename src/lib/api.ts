@@ -64,7 +64,7 @@ api.interceptors.response.use(
     try {
       // Envia o refresh token para a rota de renovação
       // Usamos a 'api' pois ela já tem o baseURL
-      const res = await api.post('/refresh', { refresh_token: refreshToken });
+      const res = await api.post(`${process.env.NEXT_PUBLIC_API_URL}/refresh/`, { refresh_token: refreshToken });
 
       const { access_token } = res.data;
 

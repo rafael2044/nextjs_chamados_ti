@@ -89,7 +89,7 @@ export default function UnidadePage() {
   const fetchUnidades = useCallback(async () => {
     setLoadingUnidades(true);
     try {
-      const response = await api.get("/unidade", {
+      const response = await api.get("/unidade/", {
         params: { offset: currentPage, limit: ITEMS_PER_PAGE },
       });
       setData(response.data);
@@ -111,7 +111,7 @@ export default function UnidadePage() {
     
     setIsSubmitting(true);
     try {
-      await api.post("/unidade", { nome });
+      await api.post("/unidade/", { nome });
 
       toast.success("Nova unidade cadastrada");
       setNome("");
@@ -133,7 +133,7 @@ export default function UnidadePage() {
 
     setIsDeleting(true);
     try {
-      await api.delete(`/unidade/${unidadeParaDeletar.id}`);
+      await api.delete(`/unidade/${unidadeParaDeletar.id}/`);
       toast.success("Unidade deletada com sucesso");
 
       // 4. (Refatoração) Lógica de paginação simplificada.

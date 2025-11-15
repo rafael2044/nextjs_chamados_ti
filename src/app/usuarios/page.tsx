@@ -112,7 +112,7 @@ export default function UsuarioPage() {
     const fetchPrivilegios = async () => {
       setIsLoadingPrivilegios(true);
       try {
-        const response = await api.get("/privilegio");
+        const response = await api.get("/privilegio/");
         setPrivilegios(response.data);
         // 3. Define o primeiro privilégio como padrão no formulário
         if (response.data?.length > 0) {
@@ -132,7 +132,7 @@ export default function UsuarioPage() {
   const fetchUsers = useCallback(async () => {
     setIsLoadingUsers(true);
     try {
-      const response = await api.get("/user", {
+      const response = await api.get("/user/", {
         params: { 
           offset: currentPage, 
           limit: ITEMS_PER_PAGE, 
@@ -157,7 +157,7 @@ export default function UsuarioPage() {
     e.preventDefault();
     setIsFormSubmitting(true);
     try {
-      const newUser = await api.post("/user", {
+      const newUser = await api.post("/user/", {
         username: nome,
         password,
         privilegio: Number(privilegioId), // 5. Envia o ID do estado
@@ -191,7 +191,7 @@ export default function UsuarioPage() {
     if (!userParaDeletar) return;
     setIsDeleting(true);
     try {
-      await api.delete(`/user/${userParaDeletar.id}`);
+      await api.delete(`/user/${userParaDeletar.id}/`);
       toast.success(`O usuário ${userParaDeletar.username} foi excluido.`);
 
       // 8. Lógica de paginação pós-exclusão
