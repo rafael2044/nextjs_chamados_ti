@@ -41,7 +41,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await api.post("/login/", form);
+      const res = await api.post("/login", form);
       const { access_token, refresh_token } = res.data;
 
       login(access_token, refresh_token); 
