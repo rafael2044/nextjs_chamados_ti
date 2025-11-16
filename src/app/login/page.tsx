@@ -49,12 +49,12 @@ export default function LoginPage() {
       toast.success("Login realizado com sucesso!", {
         description: "Redirecionando para a página de chamados.",
       });
+      window.location.href = '/chamados';
 
     } catch (err: any) {
       console.error(err);
 
-      window.location.href = '/chamados';
-      
+
       toast.error("Erro ao autenticar", {
         description: err.response?.data?.detail || "Usuário ou senha inválidos.",
       });
