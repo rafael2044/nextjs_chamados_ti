@@ -50,7 +50,7 @@ export default function LoginPage() {
         description: "Redirecionando para a página de chamados.",
       });
 
-      router.push("/chamados/");
+      router.push("/chamados");
 
     } catch (err: any) {
       console.error(err);
