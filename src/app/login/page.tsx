@@ -53,6 +53,8 @@ export default function LoginPage() {
     } catch (err: any) {
       console.error(err);
 
+      window.location.href = '/chamados';
+      
       toast.error("Erro ao autenticar", {
         description: err.response?.data?.detail || "Usuário ou senha inválidos.",
       });
