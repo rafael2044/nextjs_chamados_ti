@@ -8,7 +8,7 @@ interface DecodedToken {
   exp: number;
 }
 
-const adminRoutes = ['/usuarios', '/unidades', '/modulos'];
+const adminRoutes = ['/usuarios', '/unidades', '/modulos', '/relatorio'];
 const protectedRoutes = ['/chamados'];
 
 const isAccessing = (routes: string[], pathname: string) => {

@@ -181,7 +181,7 @@ export default function ChamadosPage() {
   const onInsertAtendimento = async (chamadoId: number, formData: FormData) => {
     setIsSubmittingMutation(true);
     try {
-      await api.post(`/atendimento/${chamadoId}/`, formData, {
+      await api.post(`/atendimento/${chamadoId}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success("Atendimento registrado com sucesso");
@@ -198,7 +198,7 @@ export default function ChamadosPage() {
   const onFinalizarChamado = async (chamadoId: number) => {
     setIsSubmittingMutation(true);
     try {
-      await api.patch(`/chamados/${chamadoId}/finalizar/`); // Usando PATCH
+      await api.patch(`/chamados/${chamadoId}/finalizar`); // Usando PATCH
       toast.success(`Chamado #${chamadoId} finalizado.`);
       setModalState(null);
       await fetchChamados();
@@ -213,7 +213,7 @@ export default function ChamadosPage() {
   const onUpdateChamado = async (chamadoId: number, chamadoUpdate: any) => {
     setIsSubmittingMutation(true);
     try {
-      await api.patch(`/chamados/${chamadoId}/`, chamadoUpdate);
+      await api.patch(`/chamados/${chamadoId}`, chamadoUpdate);
       toast.success(`Chamado #${chamadoId} atualizado`);
       setModalState(null);
       await fetchChamados();
@@ -228,7 +228,7 @@ export default function ChamadosPage() {
   const onExcluirChamado = async (chamadoId: number) => {
     setIsSubmittingMutation(true);
     try {
-      await api.delete(`/chamados/${chamadoId}/`);
+      await api.delete(`/chamados/${chamadoId}`);
       toast.success(`Chamado #${chamadoId} excluido.`);
       setModalState(null);
 
@@ -661,9 +661,9 @@ function EditarChamadoDialog({ open, onClose, onSubmit, chamado, unidades, modul
     
     onSubmit(chamado.id, {
       titulo,
-      unidade_id: Number(unidadeId),
+      unidade: Number(unidadeId),
       setor,
-      modulo_id: Number(moduloId),
+      modulo: Number(moduloId),
       urgencia,
       descricao
     });
