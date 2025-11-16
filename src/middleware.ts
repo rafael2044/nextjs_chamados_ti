@@ -9,7 +9,7 @@ interface DecodedToken {
 }
 
 const adminRoutes = ['/usuarios', '/unidades', '/modulos', '/relatorio'];
-const protectedRoutes = ['/chamados'];
+const protectedRoutes = ['/chamados', '/chamados/novo'];
 
 const isAccessing = (routes: string[], pathname: string) => {
   return routes.some(route => pathname.startsWith(route));
@@ -22,7 +22,7 @@ export function middleware(request: NextRequest) {
 
   const isAccessingAdminRoute = isAccessing(adminRoutes, pathname);
   const isAccessingProtectedRoute = isAccessing(protectedRoutes, pathname);
-  const isAccessingAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/registrar');
+  const isAccessingAuthRoute = pathname.startsWith('/login');
 
   const loginUrl = new URL('/login', request.url);
   const homeUrl = new URL('/', request.url); 
