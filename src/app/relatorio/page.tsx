@@ -5,7 +5,6 @@ import {
   Bar, BarChart, Pie, PieChart, Cell,
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'; // Mantemos o 'recharts'
-import { PDFDownloadLink } from '@react-pdf/renderer'; // Mantemos o PDF renderer
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import Navbar from '@/components/layout/Navbar';
@@ -23,8 +22,17 @@ import {
   ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent
 } from "@/components/ui/chart"; // Wrapper do Shadcn para o Recharts
 
-import {RelatorioUnidadePDF} from '@/components/pdf/RelatorioUnidadePDF';
-import {RelatorioModuloPDF} from '@/components/pdf/RelatorioModuloPDF';
+interface ChartData {
+  nome: string;
+  total?: number; // Usado por Módulo, Unidade, Status
+  tempo_medio?: number; // Usado por TMR
+}
+
+// Tipo específico para os dados do PDF (que só precisam de nome e total)
+interface PdfData {
+  nome: string;
+  total: number;
+}
 
 const DynamicPDFButton = dynamic(
   () => import('@/components/pdf/DynamicPDFButton'),
@@ -80,15 +88,15 @@ export default function RelatorioPage() {
   const [isFiltering, setIsFiltering] = useState(false);
 
   // --- Estados para os Gráficos (Preservado) ---
-  const [moduloData, setModuloData] = useState([]);
+  const [moduloData, setModuloData] = useState<ChartData[]>([]);
   const [isModuloLoading, setIsModuloLoading] = useState(true);
-  const [tmrData, setTmrData] = useState([]);
+  const [tmrData, setTmrData] = useState<ChartData[]>([]);
   const [isTmrLoading, setIsTmrLoading] = useState(true);
-  const [tmrUnidadeData, setTmrUnidadeData] = useState([]);
+  const [tmrUnidadeData, setTmrUnidadeData] = useState<ChartData[]>([]);
   const [isTmrUnidadeLoading, setIsTmrUnidadeLoading] = useState(true);
-  const [statusData, setStatusData] = useState([]);
+  const [statusData, setStatusData] = useState<ChartData[]>([]);
   const [isStatusLoading, setIsStatusLoading] = useState(true);
-  const [unidadeData, setUnidadeData] = useState([]);
+  const [unidadeData, setUnidadeData] = useState<ChartData[]>([]);
   const [isUnidadeLoading, setIsUnidadeLoading] = useState(true);
 
   // --- Funções de Fetch de Dados (Preservado e Melhorado com Toast) ---
@@ -267,22 +275,21 @@ export default function RelatorioPage() {
               )}
             </CardContent>
             <CardFooter className="border-t p-4">
-              <Button asChild className="w-full" disabled={isModuloLoading || moduloData.length === 0}>
-                <DynamicPDFButton
-                  document={
-                    <RelatorioModuloPDF
-                      dataInicio={formatarIsoParaBr(dataInicio)}
-                      dataFim={formatarIsoParaBr(dataFim)}
-                      dados={moduloData}
-                    />
-                  }
-                  fileName="relatorio-chamados-por-modulo.pdf"
-                  className="w-full"
-                  data={moduloData}
-                  isLoading={isModuloLoading}
-                  label="Baixar Relatório de Módulos"
-                />
-              </Button>
+              <DynamicPDFButton
+                documentType="modulo"
+                documentProps={{
+                  dataInicio: formatarIsoParaBr(dataInicio),
+                  dataFim: formatarIsoParaBr(dataFim),
+                  dados: moduloData.map(d => ({ 
+                    nome: d.nome, 
+                    total: d.total || 0 
+                  })) as PdfData[]
+                }}
+                fileName="relatorio-chamados-por-modulo.pdf"
+                className="w-full"
+                isLoading={isModuloLoading}
+                label="Baixar Relatório de Módulos"
+              />
             </CardFooter>
           </Card>
 
@@ -310,16 +317,17 @@ export default function RelatorioPage() {
             </CardContent>
             <CardFooter className="border-t p-4">
               <DynamicPDFButton
-                document={
-                  <RelatorioUnidadePDF
-                    dataInicio={formatarIsoParaBr(dataInicio)}
-                    dataFim={formatarIsoParaBr(dataFim)}
-                    dados={unidadeData}
-                  />
-                }
+                documentType="unidade"
+                documentProps={{
+                  dataInicio: formatarIsoParaBr(dataInicio),
+                  dataFim: formatarIsoParaBr(dataFim),
+                  dados: unidadeData.map(u=>({
+                    nome: u?.nome,
+                    total: u?.total
+                  })) as PdfData[]
+                }}
                 fileName="relatorio-chamados-por-unidade.pdf"
                 className="w-full"
-                data={unidadeData}
                 isLoading={isUnidadeLoading}
                 label="Baixar Relatório de Unidades"
               />

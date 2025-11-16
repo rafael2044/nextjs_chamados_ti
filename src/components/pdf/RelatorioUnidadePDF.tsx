@@ -234,3 +234,4 @@ const RelatorioUnidadePDF = ({ dataInicio, dataFim, dados }: PdfProps) => {
 };
 
 export {RelatorioUnidadePDF};
+export type {DadosProps}
