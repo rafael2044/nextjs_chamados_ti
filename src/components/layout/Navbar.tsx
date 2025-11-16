@@ -59,6 +59,9 @@ export default function Navbar() {
           <Button variant="link" asChild onClick={closeMobileMenu}>
             <Link href="/usuarios">Usuários</Link>
           </Button>
+          <Button variant="link" asChild onClick={closeMobileMenu}>
+            <Link href="/relatorio">Relatório</Link>
+          </Button>
         </>
       )}
       <Button variant="outline" onClick={handleLogout}>
