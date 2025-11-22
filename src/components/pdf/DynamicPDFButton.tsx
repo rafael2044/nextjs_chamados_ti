@@ -4,6 +4,8 @@
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import {RelatorioUnidadePDF} from "./RelatorioUnidadePDF"; // Localizado no mesmo diretório
 import {RelatorioModuloPDF} from "./RelatorioModuloPDF";   // Localizado no mesmo diretório
+import {RelatorioSuportePDF} from "./RelatorioSuportePDF";   // Localizado no mesmo diretório
+
 import type {DadosProps} from "./RelatorioUnidadePDF"; 
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
@@ -18,7 +20,7 @@ interface DynamicPDFButtonProps {
     dados: DadosProps[];
   };
   // A string que "localiza" qual PDF usar
-  documentType: 'unidade' | 'modulo'; 
+  documentType: 'unidade' | 'modulo' | 'suporte'; 
   fileName: string;
   className?: string;
   isLoading: boolean;
@@ -58,7 +60,16 @@ export const DynamicPDFButton = ({
         dados={dados} 
       />
     );
-  } else {
+  }else if (documentType === 'suporte'){
+    documentToRender = (
+      <RelatorioSuportePDF
+        dataInicio={dataInicio}
+        dataFim={dataFim}
+        dados={dados} 
+      />
+    );
+  } 
+  else {
     // Caso o tipo seja inválido
     return <Button disabled>Tipo de Relatório Inválido</Button>;
   }
