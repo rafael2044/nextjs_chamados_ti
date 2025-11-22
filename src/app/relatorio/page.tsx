@@ -89,6 +89,7 @@ export default function RelatorioPage() {
 
   // --- Estados para os Gráficos (Preservado) ---
   const [moduloData, setModuloData] = useState<ChartData[]>([]);
+  const [suporteData, setSuporteData] = useState<ChartData[]>([]);
   const [isModuloLoading, setIsModuloLoading] = useState(true);
   const [tmrData, setTmrData] = useState<ChartData[]>([]);
   const [isTmrLoading, setIsTmrLoading] = useState(true);
@@ -98,6 +99,7 @@ export default function RelatorioPage() {
   const [isStatusLoading, setIsStatusLoading] = useState(true);
   const [unidadeData, setUnidadeData] = useState<ChartData[]>([]);
   const [isUnidadeLoading, setIsUnidadeLoading] = useState(true);
+  const [isSuporteLoading, setIsSuporteLoading] = useState(true);
 
   // --- Funções de Fetch de Dados (Preservado e Melhorado com Toast) ---
 
@@ -120,6 +122,20 @@ export default function RelatorioPage() {
       toast.error("Erro ao buscar dados de Módulo.");
     } finally {
       if (!isFilterRequest) setIsModuloLoading(false);
+    }
+  }, [buildUrlParams]);
+
+  const fetchSuporteData = useCallback(async (isFilterRequest = false) => {
+    if (!isFilterRequest) setIsSuporteLoading(true);
+    try {
+      const params = buildUrlParams();
+      const response = await api.get(`/relatorio/chamados-por-suporte?${params}`);
+      setSuporteData(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar dados de Suporte:", error);
+      toast.error("Erro ao buscar dados de Suporte.");
+    } finally {
+      if (!isFilterRequest) setIsSuporteLoading(false);
     }
   }, [buildUrlParams]);
 
@@ -192,6 +208,7 @@ export default function RelatorioPage() {
     fetchStatusData(false);
     fetchUnidadeData(false);
     fetchTmrUnidadeData(false);
+    fetchSuporteData(false);
   }, [fetchModuloData, fetchTmrData, fetchStatusData, fetchUnidadeData, fetchTmrUnidadeData]);
 
   // Handler do botão "Filtrar"
@@ -203,7 +220,8 @@ export default function RelatorioPage() {
       fetchTmrData(true),
       fetchStatusData(true),
       fetchUnidadeData(true),
-      fetchTmrUnidadeData(true)
+      fetchTmrUnidadeData(true),
+      fetchSuporteData(true)
     ]);
     setIsFiltering(false);
   };
@@ -289,6 +307,46 @@ export default function RelatorioPage() {
                 className="w-full"
                 isLoading={isModuloLoading}
                 label="Baixar Relatório de Módulos"
+              />
+            </CardFooter>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center"><BarChart3 className="mr-2" /> Chamados por Suporte</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isSuporteLoading ? (
+                <LoadingSpinner />
+              ) : (
+                <ChartContainer config={{}} className="h-[400px] w-full">
+                  <ResponsiveContainer>
+                    <BarChart data={suporteData}>
+                      <XAxis dataKey="nome" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                      <YAxis />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartLegend content={<ChartLegendContent />} />
+                      <Bar dataKey="total" fill="var(--color-primary)" name="Total de Chamados" radius={4} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              )}
+            </CardContent>
+            <CardFooter className="border-t p-4">
+              <DynamicPDFButton
+                documentType="modulo"
+                documentProps={{
+                  dataInicio: formatarIsoParaBr(dataInicio),
+                  dataFim: formatarIsoParaBr(dataFim),
+                  dados: suporteData.map(d => ({ 
+                    nome: d.nome, 
+                    total: d.total || 0 
+                  })) as PdfData[]
+                }}
+                fileName="relatorio-chamados-por-suporte.pdf"
+                className="w-full"
+                isLoading={isSuporteLoading}
+                label="Baixar Relatório de Suporte"
               />
             </CardFooter>
           </Card>
