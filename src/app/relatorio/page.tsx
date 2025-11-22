@@ -334,7 +334,7 @@ export default function RelatorioPage() {
             </CardContent>
             <CardFooter className="border-t p-4">
               <DynamicPDFButton
-                documentType="modulo"
+                documentType="suporte"
                 documentProps={{
                   dataInicio: formatarIsoParaBr(dataInicio),
                   dataFim: formatarIsoParaBr(dataFim),
