@@ -2,11 +2,13 @@
 
 // 1. O PRÓPRIO BOTÃO importa todos os componentes de PDF
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import {RelatorioUnidadePDF} from "./RelatorioUnidadePDF"; // Localizado no mesmo diretório
-import {RelatorioModuloPDF} from "./RelatorioModuloPDF";   // Localizado no mesmo diretório
-import {RelatorioSuportePDF} from "./RelatorioSuportePDF";   // Localizado no mesmo diretório
+import { RelatorioUnidadePDF } from "./RelatorioUnidadePDF"; // Localizado no mesmo diretório
+import { RelatorioModuloPDF } from "./RelatorioModuloPDF";   // Localizado no mesmo diretório
+import { RelatorioSuportePDF } from "./RelatorioSuportePDF";   // Localizado no mesmo diretório
+import { RelatorioProblemasUnidadePDF } from "./RelatorioProblemasPorUnidadePDF";   // Localizado no mesmo diretório
+import { RelatorioTreinamentoUnidadePDF } from "./RelatorioTreinamentoPorUnidadePDF";   // Localizado no mesmo diretório
 
-import type {DadosProps} from "./RelatorioUnidadePDF"; 
+import type { DadosProps } from "./RelatorioUnidadePDF";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import React from "react";
@@ -20,7 +22,7 @@ interface DynamicPDFButtonProps {
     dados: DadosProps[];
   };
   // A string que "localiza" qual PDF usar
-  documentType: 'unidade' | 'modulo' | 'suporte'; 
+  documentType: 'unidade' | 'modulo' | 'suporte' | 'problemas' | 'treinamento';
   fileName: string;
   className?: string;
   isLoading: boolean;
@@ -49,7 +51,7 @@ export const DynamicPDFButton = ({
       <RelatorioUnidadePDF
         dataInicio={dataInicio}
         dataFim={dataFim}
-        dados={dados} 
+        dados={dados}
       />
     );
   } else if (documentType === 'modulo') {
@@ -57,18 +59,34 @@ export const DynamicPDFButton = ({
       <RelatorioModuloPDF
         dataInicio={dataInicio}
         dataFim={dataFim}
-        dados={dados} 
+        dados={dados}
       />
     );
-  }else if (documentType === 'suporte'){
+  } else if (documentType === 'suporte') {
     documentToRender = (
       <RelatorioSuportePDF
         dataInicio={dataInicio}
         dataFim={dataFim}
-        dados={dados} 
+        dados={dados}
       />
     );
-  } 
+  } else if (documentType === 'problemas') {
+    documentToRender = (
+      <RelatorioProblemasUnidadePDF
+        dataInicio={dataInicio}
+        dataFim={dataFim}
+        dados={dados}
+      />
+    );
+  } else if (documentType === 'treinamento') {
+    documentToRender = (
+      <RelatorioTreinamentoUnidadePDF
+        dataInicio={dataInicio}
+        dataFim={dataFim}
+        dados={dados}
+      />
+    );
+  }
   else {
     // Caso o tipo seja inválido
     return <Button disabled>Tipo de Relatório Inválido</Button>;

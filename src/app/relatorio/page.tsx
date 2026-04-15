@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import api from '@/lib/api';
 import Navbar from '@/components/layout/Navbar';
 import { format, parse, parseISO } from 'date-fns';
-import dynamic from 'next/dynamic'; 
+import dynamic from 'next/dynamic';
 // --- Componentes Shadcn/ui ---
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter
@@ -90,6 +90,8 @@ export default function RelatorioPage() {
   // --- Estados para os Gráficos (Preservado) ---
   const [moduloData, setModuloData] = useState<ChartData[]>([]);
   const [suporteData, setSuporteData] = useState<ChartData[]>([]);
+  const [qtdTreinamentoPorUnidadeData, setQtdTreinamentoPorUnidadeData] = useState<ChartData[]>([]);
+  const [qtdProblemasPorUnidadeData, setQtdProblemasPorUnidadeData] = useState<ChartData[]>([]);
   const [isModuloLoading, setIsModuloLoading] = useState(true);
   const [tmrData, setTmrData] = useState<ChartData[]>([]);
   const [isTmrLoading, setIsTmrLoading] = useState(true);
@@ -199,17 +201,48 @@ export default function RelatorioPage() {
     }
   }, [buildUrlParams]);
 
+  const fetchQtdTreinamentoPorUnidadeData = useCallback(async (isFilterRequest = false) => {
+    if (!isFilterRequest) setIsUnidadeLoading(true);
+    try {
+      const params = buildUrlParams();
+      const response = await api.get(`/relatorio/qtd-treinamentos-por-unidade?${params}`);
+      setQtdTreinamentoPorUnidadeData(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar dados de Qtd Treinamento por Módulo:", error);
+      toast.error("Erro ao buscar dados de Qtd Treinamento por Módulo.");
+    } finally {
+      if (!isFilterRequest) setIsModuloLoading(false);
+    }
+  }, [buildUrlParams]);
+
+  // Fetch Gráfico 6
+  const fetchQtdProblemasPorUnidadeData = useCallback(async (isFilterRequest = false) => {
+    if (!isFilterRequest) setIsModuloLoading(true);
+    try {
+      const params = buildUrlParams();
+      const response = await api.get(`/relatorio/qtd-problemas-por-unidade?${params}`);
+      setQtdProblemasPorUnidadeData(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar dados de Qtd Problemas por Módulo:", error);
+      toast.error("Erro ao buscar dados de Qtd Problemas por Módulo.");
+    } finally {
+      if (!isFilterRequest) setIsModuloLoading(false);
+    }
+  }, [buildUrlParams]);
+
   // --- Handlers e Effects (Preservados) ---
 
   // Carga inicial (busca dados de todos os gráficos)
   useEffect(() => {
     fetchModuloData(false);
-    fetchTmrData(false);
+    //fetchTmrData(false);
     fetchStatusData(false);
     fetchUnidadeData(false);
-    fetchTmrUnidadeData(false);
+    //fetchTmrUnidadeData(false);
     fetchSuporteData(false);
-  }, [fetchModuloData, fetchTmrData, fetchStatusData, fetchUnidadeData, fetchTmrUnidadeData]);
+    fetchQtdTreinamentoPorUnidadeData(false);
+    fetchQtdProblemasPorUnidadeData(false);
+  }, [fetchModuloData, fetchTmrData, fetchStatusData, fetchUnidadeData, fetchTmrUnidadeData, fetchQtdTreinamentoPorUnidadeData, fetchQtdProblemasPorUnidadeData]);
 
   // Handler do botão "Filtrar"
   const handleFilterSubmit = async (e: FormEvent) => {
@@ -217,10 +250,12 @@ export default function RelatorioPage() {
     setIsFiltering(true);
     await Promise.all([
       fetchModuloData(true),
-      fetchTmrData(true),
+      //fetchTmrData(true),
+      fetchQtdTreinamentoPorUnidadeData(true),
+      fetchQtdProblemasPorUnidadeData(true),
       fetchStatusData(true),
       fetchUnidadeData(true),
-      fetchTmrUnidadeData(true),
+      //fetchTmrUnidadeData(true),
       fetchSuporteData(true)
     ]);
     setIsFiltering(false);
@@ -298,9 +333,9 @@ export default function RelatorioPage() {
                 documentProps={{
                   dataInicio: formatarIsoParaBr(dataInicio),
                   dataFim: formatarIsoParaBr(dataFim),
-                  dados: moduloData.map(d => ({ 
-                    nome: d.nome, 
-                    total: d.total || 0 
+                  dados: moduloData.map(d => ({
+                    nome: d.nome,
+                    total: d.total || 0
                   })) as PdfData[]
                 }}
                 fileName="relatorio-chamados-por-modulo.pdf"
@@ -338,9 +373,9 @@ export default function RelatorioPage() {
                 documentProps={{
                   dataInicio: formatarIsoParaBr(dataInicio),
                   dataFim: formatarIsoParaBr(dataFim),
-                  dados: suporteData.map(d => ({ 
-                    nome: d.nome, 
-                    total: d.total || 0 
+                  dados: suporteData.map(d => ({
+                    nome: d.nome,
+                    total: d.total || 0
                   })) as PdfData[]
                 }}
                 fileName="relatorio-chamados-por-suporte.pdf"
@@ -379,7 +414,7 @@ export default function RelatorioPage() {
                 documentProps={{
                   dataInicio: formatarIsoParaBr(dataInicio),
                   dataFim: formatarIsoParaBr(dataFim),
-                  dados: unidadeData.map(u=>({
+                  dados: unidadeData.map(u => ({
                     nome: u?.nome,
                     total: u?.total
                   })) as PdfData[]
@@ -393,7 +428,7 @@ export default function RelatorioPage() {
           </Card>
 
           {/* --- Gráfico 3 (TMR por Módulo) --- */}
-          <Card className="shadow-sm">
+          {/* <Card className="shadow-sm">
             <CardHeader>
               <CardTitle>TMR por Módulo (em Horas)</CardTitle>
             </CardHeader>
@@ -414,9 +449,9 @@ export default function RelatorioPage() {
                 </ChartContainer>
               )}
             </CardContent>
-          </Card>
+          </Card> */}
 
-          {/* --- Gráfico 4 (TMR por Unidade) --- */}
+          {/* --- Gráfico 4 (TMR por Unidade) ---
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle>TMR por Unidade (em Horas)</CardTitle>
@@ -438,6 +473,86 @@ export default function RelatorioPage() {
                 </ChartContainer>
               )}
             </CardContent>
+          </Card> */}
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center"><BarChart3 className="mr-2" /> Treinamento por Unidade</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isUnidadeLoading ? (
+                <LoadingSpinner />
+              ) : (
+                <ChartContainer config={{}} className="h-[400px] w-full">
+                  <ResponsiveContainer>
+                    <BarChart data={qtdTreinamentoPorUnidadeData}>
+                      <XAxis dataKey="nome" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                      <YAxis />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartLegend content={<ChartLegendContent />} />
+                      <Bar dataKey="total" fill="var(--color-primary)" name="Total de Treinamentos" radius={4} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              )}
+            </CardContent>
+            <CardFooter className="border-t p-4">
+              <DynamicPDFButton
+                documentType="treinamento"
+                documentProps={{
+                  dataInicio: formatarIsoParaBr(dataInicio),
+                  dataFim: formatarIsoParaBr(dataFim),
+                  dados: qtdTreinamentoPorUnidadeData.map(u => ({
+                    nome: u?.nome,
+                    total: u?.total || 0
+                  })) as PdfData[]
+                }}
+                fileName="relatorio-treinamento-por-unidade.pdf"
+                className="w-full"
+                isLoading={isUnidadeLoading}
+                label="Baixar Relatório de Treinamentos por Unidade"
+              />
+            </CardFooter>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center"><BarChart3 className="mr-2" />Problemas por Unidade</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isUnidadeLoading ? (
+                <LoadingSpinner />
+              ) : (
+                <ChartContainer config={{}} className="h-[400px] w-full">
+                  <ResponsiveContainer>
+                    <BarChart data={qtdProblemasPorUnidadeData}>
+                      <XAxis dataKey="nome" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                      <YAxis />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartLegend content={<ChartLegendContent />} />
+                      <Bar dataKey="total" fill="var(--color-primary)" name="Total de Problemas" radius={4} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              )}
+            </CardContent>
+            <CardFooter className="border-t p-4">
+              <DynamicPDFButton
+                documentType="problemas"
+                documentProps={{
+                  dataInicio: formatarIsoParaBr(dataInicio),
+                  dataFim: formatarIsoParaBr(dataFim),
+                  dados: qtdProblemasPorUnidadeData.map(u => ({
+                    nome: u?.nome,
+                    total: u?.total || 0
+                  })) as PdfData[]
+                }}
+                fileName="relatorio-problemas-por-unidade.pdf"
+                className="w-full"
+                isLoading={isUnidadeLoading}
+                label="Baixar Relatório de Problemas por Unidade"
+              />
+            </CardFooter>
           </Card>
 
           {/* --- Gráfico 5 (Chamados por Status) --- */}
