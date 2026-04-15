@@ -62,6 +62,8 @@ interface Chamado {
   solicitante: string;
   status: string; // Ajustado para objeto
   urgencia: "Baixa" | "Média" | "Alta";
+  qtd_treinamentos?: number | string;
+  qtd_problemas?: number | string;
   descricao: string;
   data_abertura: string;
   data_fechamento?: string;
@@ -89,7 +91,7 @@ type ModalState =
 export default function ChamadosPage() {
   // 5. Hook de Autenticação
   // (Assumindo que seu useAuth() retorna 'isAdmin' e 'isSuporte')
-  const { isAdmin, isSuporte } = useAuth(); 
+  const { isAdmin, isSuporte } = useAuth();
 
   // Estados de Dados
   const [data, setData] = useState<ChamadosData>({
@@ -112,7 +114,7 @@ export default function ChamadosPage() {
   const [isLoadingChamados, setIsLoadingChamados] = useState(true);
   const [isSubmittingMutation, setIsSubmittingMutation] = useState(false); // Para todos modais
   const [modalState, setModalState] = useState<ModalState>(null); // 6. Estado de modal unificado
-  
+
   const paginationItems = getPaginationItems(currentPage, data.total_pages);
   const isFiltered = search || filtroUnidade || filtroModulo || filtroStatus || filtroUrgencia;
 
@@ -127,7 +129,7 @@ export default function ChamadosPage() {
         api.get('/modulo/'),  // Assume que retorna { modulos: [...] }
         api.get('/status/')    // Assume que retorna [...]
       ]);
-      
+
       setUnidades(unidadesResp.data.unidades || []);
       setModulos(modulosResp.data.modulos || []);
       setStatusList(statusResp.data || []);
@@ -165,7 +167,7 @@ export default function ChamadosPage() {
       setIsLoadingChamados(false);
     }
   }, [currentPage, search, filtroModulo, filtroUnidade, filtroStatus, filtroUrgencia]);
-  
+
   // Efeitos para carregar dados
   useEffect(() => {
     fetchFilterData();
@@ -280,7 +282,7 @@ export default function ChamadosPage() {
     <div className="flex flex-col min-h-screen bg-muted/40">
       <Navbar />
       <main className="container mx-auto max-w-7xl p-4 md:p-8">
-        
+
         {/* --- Card de Filtros --- */}
         <Card className="shadow-lg mb-6">
           <CardHeader>
@@ -308,7 +310,7 @@ export default function ChamadosPage() {
                 <Label htmlFor="filtroUnidade">Unidade</Label>
                 <Select value={filtroUnidade} onValueChange={handleFilterChange(setFiltroUnidade)}>
                   <SelectTrigger id="filtroUnidade" className="w-full">
-                    <SelectValue placeholder="Todas as Unidades"/>
+                    <SelectValue placeholder="Todas as Unidades" />
                   </SelectTrigger>
                   <SelectContent>
                     {unidades.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.nome}</SelectItem>)}
@@ -359,11 +361,11 @@ export default function ChamadosPage() {
         )}
         {!isLoadingChamados && data.chamados.length > 0 && (
           <Accordion type="single" collapsible className="w-full space-y-2">
-            
+
             {/* 8. Mapeamento do ChamadoItem (agora como AccordionItem) */}
             {data.chamados.map((chamado) => (
               <AccordionItem value={`item-${chamado.id}`} key={chamado.id} className="border bg-background rounded-lg shadow-sm">
-                
+
                 {/* Cabeçalho (Trigger) */}
                 <AccordionTrigger className="p-4 hover:no-underline">
                   <div className="flex justify-between items-center w-full">
@@ -377,14 +379,14 @@ export default function ChamadosPage() {
                     </div>
                     <div className="flex items-center gap-2 pr-4">
                       <Badge variant={
-                        chamado.urgencia === 'Alta' ? 'destructive' : 
-                        chamado.urgencia === 'Média' ? 'secondary' : 'default'
+                        chamado.urgencia === 'Alta' ? 'destructive' :
+                          chamado.urgencia === 'Média' ? 'secondary' : 'default'
                       }>
                         <Hourglass className="h-3 w-3 mr-1" /> {chamado.urgencia}
                       </Badge>
                       <Badge className={
                         chamado.status === 'Concluído' ? 'bg-green-600' :
-                        chamado.status === 'Em andamento' ? 'bg-blue-600' : 'bg-yellow-500'
+                          chamado.status === 'Em andamento' ? 'bg-blue-600' : 'bg-yellow-500'
                       }>
                         {chamado.status}
                       </Badge>
@@ -398,6 +400,12 @@ export default function ChamadosPage() {
                     <p><strong>Descrição:</strong> {chamado.descricao}</p>
                     <p><strong>Setor:</strong> {chamado.setor}</p>
                     <p><strong>Módulo:</strong> {chamado.modulo || 'N/A'}</p>
+                    {chamado.modulo.toLowerCase() === "treinamento" && chamado.qtd_treinamentos && (
+                      <p><strong>Quantidade de Treinamentos:</strong> {chamado.qtd_treinamentos}</p>
+                    )}
+                    {chamado.modulo.toLowerCase() === "ronda" && chamado.qtd_problemas && (
+                      <p><strong>Quantidade de Problemas:</strong> {chamado.qtd_problemas}</p>
+                    )}
                     <p><strong>Abertura:</strong> {new Date(chamado.data_abertura).toLocaleString()}</p>
                     {chamado.data_fechamento && (
                       <p><strong>Fechamento:</strong> {new Date(chamado.data_fechamento).toLocaleString()}</p>
@@ -500,7 +508,7 @@ export default function ChamadosPage() {
         onSubmit={onUpdateChamado}
         isLoading={isSubmittingMutation}
       />
-      
+
       {/* --- Modal: Inserir Atendimento --- */}
       {/* 10. Renderiza o Modal de Atendimento (antigo ModalAtendimento) */}
       <AtendimentoDialog
@@ -571,7 +579,7 @@ function AtendimentoDialog({ open, onClose, onSubmit, chamado, isLoading }: Aten
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!chamado) return;
-    
+
     const formData = new FormData();
     formData.append("descricao", descricao);
     if (anexo) {
@@ -640,9 +648,9 @@ interface EditarChamadoDialogProps {
 }
 
 function EditarChamadoDialog({ open, onClose, onSubmit, chamado, unidades, modulos, isLoading }: EditarChamadoDialogProps) {
-  
+
   const initialUnidadeId = String(
-    unidades.find(u => u.nome === chamado?.unidade)?.id || "" 
+    unidades.find(u => u.nome === chamado?.unidade)?.id || ""
   );
   const initialModuloId = String(
     modulos.find(m => m.nome === chamado?.modulo)?.id || ""
@@ -655,17 +663,24 @@ function EditarChamadoDialog({ open, onClose, onSubmit, chamado, unidades, modul
   const [urgencia, setUrgencia] = useState(chamado?.urgencia || "Média");
   const [descricao, setDescricao] = useState(chamado?.descricao || "");
 
+  const [qtdTreinamentos, setQtdTreinamentos] = useState(chamado?.qtd_treinamentos || "");
+  const [qtdProblemas, setQtdProblemas] = useState(chamado?.qtd_problemas || "");
+
+  const moduloSelecionadoNome = modulos.find(m => String(m.id) === moduloId)?.nome;
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!chamado) return;
-    
+
     onSubmit(chamado.id, {
       titulo,
       unidade: Number(unidadeId),
       setor,
       modulo: Number(moduloId),
       urgencia,
-      descricao
+      descricao,
+      qtd_treinamentos: moduloSelecionadoNome?.toLowerCase() === "treinamento" ? Number(qtdTreinamentos) : null,
+      qtd_problemas: moduloSelecionadoNome?.toLowerCase() === "ronda" ? Number(qtdProblemas) : null,
     });
   };
 
@@ -674,12 +689,12 @@ function EditarChamadoDialog({ open, onClose, onSubmit, chamado, unidades, modul
   return (
     <Dialog open={open} onOpenChange={onClose}>
       {/* Mantive a largura 'max-w-3xl' para dar espaço */}
-      <DialogContent className="max-w-3xl"> 
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Editar - Chamado #{chamado.id}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          
+
           {/* Título */}
           <div className="space-y-2">
             <Label htmlFor="edit-titulo">Título</Label>
@@ -688,7 +703,7 @@ function EditarChamadoDialog({ open, onClose, onSubmit, chamado, unidades, modul
 
           {/* --- CORREÇÃO AQUI --- */}
           {/* Removi o 'grid'. Cada campo agora ocupa sua própria linha. */}
-          
+
           <div className="space-y-2">
             <Label htmlFor="edit-unidade">Unidade</Label>
             <Select value={unidadeId} onValueChange={setUnidadeId} disabled={isLoading} required>
@@ -698,12 +713,12 @@ function EditarChamadoDialog({ open, onClose, onSubmit, chamado, unidades, modul
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="edit-setor">Setor</Label>
             <Input id="edit-setor" value={setor} onChange={(e) => setSetor(e.target.value)} disabled={isLoading} required />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="edit-modulo">Módulo</Label>
             <Select value={moduloId} onValueChange={setModuloId} disabled={isLoading} required>
@@ -713,7 +728,7 @@ function EditarChamadoDialog({ open, onClose, onSubmit, chamado, unidades, modul
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="edit-urgencia">Urgência</Label>
             <Select value={urgencia} onValueChange={(v) => setUrgencia(v as any)} disabled={isLoading} required>
@@ -724,13 +739,39 @@ function EditarChamadoDialog({ open, onClose, onSubmit, chamado, unidades, modul
             </Select>
           </div>
 
-          {/* --- FIM DA CORREÇÃO --- */}
+          {moduloSelecionadoNome?.toLowerCase() === "treinamento" && (
+            <div className="space-y-2">
+              <Label htmlFor="edit-qtdTreinamentos">Quantidade de Treinamentos</Label>
+              <Input
+                id="edit-qtdTreinamentos"
+                type="number"
+                value={qtdTreinamentos}
+                onChange={(e) => setQtdTreinamentos(e.target.value)}
+                disabled={isLoading}
+                required
+              />
+            </div>
+          )}
+
+          {moduloSelecionadoNome?.toLowerCase() === "ronda" && (
+            <div className="space-y-2">
+              <Label htmlFor="edit-qtdProblemas">Quantidade de Problemas</Label>
+              <Input
+                id="edit-qtdProblemas"
+                type="number"
+                value={qtdProblemas}
+                onChange={(e) => setQtdProblemas(e.target.value)}
+                disabled={isLoading}
+                required
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="edit-desc">Descrição</Label>
             <Textarea id="edit-desc" value={descricao} onChange={(e) => setDescricao(e.target.value)} disabled={isLoading} required rows={5} />
           </div>
-          
+
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancelar

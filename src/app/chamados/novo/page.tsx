@@ -6,13 +6,13 @@ import api from "@/lib/api";
 
 // Layout e Ícones
 import Navbar from "@/components/layout/Navbar";
-import { Loader2, Send, FilePlus, Building, Grip, Hourglass, CheckSquare } from "lucide-react";
+import { Loader2, Send, FilePlus, Building, Grip, Hourglass, CheckSquare, ListPlus } from "lucide-react";
 
 // Componentes shadcn/ui
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Importando Label
-import { Textarea } from "@/components/ui/textarea"; // 1. Novo componente
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -59,27 +59,31 @@ export default function ChamadoFormPage() {
   const [descricao, setDescricao] = useState("");
   const [anexo, setAnexo] = useState<File | null>(null);
 
+  // --- NOVOS ESTADOS ---
+  const [qtdTreinamentos, setQtdTreinamentos] = useState("");
+  const [qtdProblemas, setQtdProblemas] = useState("");
+
   // Estados de Dados
   const [unidades, setUnidades] = useState<Unidade[]>([]);
   const [modulos, setModulos] = useState<Modulo[]>([]);
-  
+
   // Estados de UI
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Ref para o input de arquivo
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Carrega Unidades e Módulos no mount
+  // Helper para identificar o nome do módulo selecionado
+  const moduloSelecionadoNome = modulos.find(m => String(m.id) === moduloId)?.nome;
+
   useEffect(() => {
     const fetchInitialData = async () => {
       setIsLoadingData(true);
       try {
-        // 2. Carrega ambos em paralelo
         const [unidadesResp, modulosResp] = await Promise.all([
-          api.get('/unidade/'), // Assume que retorna { unidades: [...] }
-          api.get('/modulo/')  // Assume que retorna { modulos: [...] }
+          api.get('/unidade/'),
+          api.get('/modulo/')
         ]);
 
         const unidadesData = unidadesResp.data.unidades || [];
@@ -88,13 +92,8 @@ export default function ChamadoFormPage() {
         setUnidades(unidadesData);
         setModulos(modulosData);
 
-        // 3. Define valores padrão
-        if (unidadesData.length > 0) {
-          setUnidadeId(String(unidadesData[0].id));
-        }
-        if (modulosData.length > 0) {
-          setModuloId(String(modulosData[0].id));
-        }
+        if (unidadesData.length > 0) setUnidadeId(String(unidadesData[0].id));
+        if (modulosData.length > 0) setModuloId(String(modulosData[0].id));
         setUrgencia("Média");
 
       } catch (err) {
@@ -105,52 +104,53 @@ export default function ChamadoFormPage() {
       }
     };
     fetchInitialData();
-  }, []); // Roda apenas uma vez
+  }, []);
 
-  // Função para resetar o formulário
   const resetForm = () => {
     setTitulo("");
     setSetor("");
     setDescricao("");
     setAnexo(null);
-    if (inputRef.current) {
-      inputRef.current.value = ""; // Limpa o input de arquivo
-    }
-    // Reseta para os padrões
+    setQtdTreinamentos(""); // Limpa campos extras
+    setQtdProblemas("");    // Limpa campos extras
+    if (inputRef.current) inputRef.current.value = "";
     if (unidades.length > 0) setUnidadeId(String(unidades[0].id));
     if (modulos.length > 0) setModuloId(String(modulos[0].id));
     setUrgencia("Média");
   };
 
-  // 4. Lida com o envio principal (após confirmação do modal)
   const handleConfirmarEnvio = async () => {
     setIsSubmitting(true);
-
-    // 5. Como temos um arquivo, TUDO deve ser enviado como FormData
     const formData = new FormData();
     formData.append('titulo', titulo);
-    formData.append('unidade', unidadeId); // Backend deve esperar 'unidade_id'
+    formData.append('unidade', unidadeId);
     formData.append('setor', setor);
-    formData.append('modulo', moduloId); // Backend deve esperar 'modulo_id'
+    formData.append('modulo', moduloId);
     formData.append('urgencia', urgencia);
     formData.append('descricao', descricao);
 
-    try {
+    // Envia campos extras apenas se o módulo correspondente estiver selecionado
+    if (moduloSelecionadoNome?.toLowerCase() === "treinamento") {
+      formData.append('qtd_treinamentos', qtdTreinamentos);
+    }
+    if (moduloSelecionadoNome?.toLowerCase() === "ronda") {
+      formData.append('qtd_problemas', qtdProblemas);
+    }
 
+    try {
       const response = await api.post('/chamados/', formData);
 
       if (anexo) {
         const formDataAnexo = new FormData();
         formDataAnexo.append("file", anexo);
         const resp = await api.post(`/chamados/${response?.data?.chamado_id}/anexo/`, formDataAnexo, {
-          headers: {"Content-Type": "multipart/form-data"}
+          headers: { "Content-Type": "multipart/form-data" }
         });
         toast.success(resp?.data.message);
-    }
+      }
 
       toast.success(response.data.message || "Chamado aberto com sucesso!");
       resetForm();
-
     } catch (error: any) {
       console.error(error);
       toast.error(error.response?.data?.detail || "Erro ao enviar chamado");
@@ -160,13 +160,11 @@ export default function ChamadoFormPage() {
     }
   };
 
-  // 7. O 'onSubmit' do formulário apenas abre o modal
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsModalOpen(true);
   };
 
-  // 8. Handler para o input de arquivo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setAnexo(e.target.files[0]);
@@ -175,7 +173,6 @@ export default function ChamadoFormPage() {
     }
   };
 
-  // 9. Tela de loading inicial
   if (isLoadingData) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -184,7 +181,6 @@ export default function ChamadoFormPage() {
     );
   }
 
-  // --- Renderização ---
   return (
     <div className="flex flex-col min-h-screen bg-muted/40">
       <Navbar />
@@ -200,7 +196,6 @@ export default function ChamadoFormPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* 10. Formulário principal */}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="titulo">Título do Chamado</Label>
@@ -214,24 +209,16 @@ export default function ChamadoFormPage() {
                 />
               </div>
 
-              {/* Grid para Unidade e Setor */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="unidade"><Building className="h-4 w-4 inline mr-1" /> Unidade</Label>
-                  <Select
-                    value={unidadeId}
-                    onValueChange={setUnidadeId}
-                    disabled={isSubmitting}
-                    required
-                  >
+                  <Select value={unidadeId} onValueChange={setUnidadeId} disabled={isSubmitting} required>
                     <SelectTrigger id="unidade" className="w-full">
                       <SelectValue placeholder="Selecione a unidade" />
                     </SelectTrigger>
                     <SelectContent>
                       {unidades.map((u) => (
-                        <SelectItem key={u.id} value={String(u.id)}>
-                          {u.nome}
-                        </SelectItem>
+                        <SelectItem key={u.id} value={String(u.id)}>{u.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -250,24 +237,16 @@ export default function ChamadoFormPage() {
                 </div>
               </div>
 
-              {/* Grid para Módulo e Urgência */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="modulo"><Grip className="h-4 w-4 inline mr-1" /> Módulo</Label>
-                  <Select
-                    value={moduloId}
-                    onValueChange={setModuloId}
-                    disabled={isSubmitting}
-                    required
-                  >
-                    <SelectTrigger id="modulo" className="w-50">
+                  <Select value={moduloId} onValueChange={setModuloId} disabled={isSubmitting} required>
+                    <SelectTrigger id="modulo" className="w-full">
                       <SelectValue placeholder="Selecione o módulo" />
                     </SelectTrigger>
                     <SelectContent>
                       {modulos.map((m) => (
-                        <SelectItem key={m.id} value={String(m.id)}>
-                          {m.nome}
-                        </SelectItem>
+                        <SelectItem key={m.id} value={String(m.id)}>{m.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -275,13 +254,8 @@ export default function ChamadoFormPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="urgencia"><Hourglass className="h-4 w-4 inline mr-1" /> Urgência</Label>
-                  <Select
-                    value={urgencia}
-                    onValueChange={setUrgencia}
-                    disabled={isSubmitting}
-                    required
-                  >
-                    <SelectTrigger id="urgencia" className="w-50">
+                  <Select value={urgencia} onValueChange={setUrgencia} disabled={isSubmitting} required>
+                    <SelectTrigger id="urgencia" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -292,6 +266,41 @@ export default function ChamadoFormPage() {
                   </Select>
                 </div>
               </div>
+
+              {/* --- CAMPOS CONDICIONAIS --- */}
+              {moduloSelecionadoNome?.toLowerCase() === "treinamento" && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                  <Label htmlFor="qtdTreinamentos">
+                    <ListPlus className="h-4 w-4 inline mr-1" /> Quantidade de Treinamentos
+                  </Label>
+                  <Input
+                    id="qtdTreinamentos"
+                    type="number"
+                    placeholder="Informe a quantidade"
+                    value={qtdTreinamentos}
+                    onChange={(e) => setQtdTreinamentos(e.target.value)}
+                    disabled={isSubmitting}
+                    required
+                  />
+                </div>
+              )}
+
+              {moduloSelecionadoNome?.toLowerCase() === "ronda" && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                  <Label htmlFor="qtdProblemas">
+                    <ListPlus className="h-4 w-4 inline mr-1" /> Quantidade de Problemas
+                  </Label>
+                  <Input
+                    id="qtdProblemas"
+                    type="number"
+                    placeholder="Informe a quantidade encontrada"
+                    value={qtdProblemas}
+                    onChange={(e) => setQtdProblemas(e.target.value)}
+                    disabled={isSubmitting}
+                    required
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="descricao">Descrição Detalhada</Label>
@@ -328,32 +337,17 @@ export default function ChamadoFormPage() {
         </Card>
       </main>
 
-      {/* 11. Modal de Confirmação */}
-      <AlertDialog
-        open={isModalOpen}
-        onOpenChange={(open) => !open && setIsModalOpen(false)}
-      >
+      <AlertDialog open={isModalOpen} onOpenChange={(open) => !open && setIsModalOpen(false)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Abertura</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você deseja confirmar a abertura deste chamado?
-            </AlertDialogDescription>
+            <AlertDialogDescription>Você deseja confirmar a abertura deste chamado?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              disabled={isSubmitting}
-              onClick={() => setIsModalOpen(false)}
-            >
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmarEnvio}
-              disabled={isSubmitting}
-            >
+            <AlertDialogCancel disabled={isSubmitting} onClick={() => setIsModalOpen(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmarEnvio} disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <CheckSquare className="mr-2 h-4 w-4" />
-              Confirmar
+              <CheckSquare className="mr-2 h-4 w-4" /> Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
